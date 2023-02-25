@@ -3,7 +3,7 @@ var expect = require('chai').expect;
 var stubs = require('./Stubs');
 
 describe('Node Server Request Listener Function', function() {
-  it('Should answer GET requests for /classes/messages with a 200 status code', function() {
+  it('Should answer GET requests for /classes/messages with a 200 status code. CUSTOM ADDITION: should return an empty array.', function() {
     // This is a fake server request. Normally, the server would provide this,
     // but we want to test our function's behavior totally independent of the server code
     var req = new stubs.request('/classes/messages', 'GET');
@@ -13,6 +13,8 @@ describe('Node Server Request Listener Function', function() {
 
     expect(res._responseCode).to.equal(200);
     expect(res._ended).to.equal(true);
+
+    expect(res._data).to.equal('[]');
   });
 
   it('Should send back parsable stringified JSON', function() {
@@ -91,4 +93,38 @@ describe('Node Server Request Listener Function', function() {
     expect(res._ended).to.equal(true);
   });
 
+  it(`CUSTOM TEST: should accept multiple different messages and return them in order`, function() {
+
+    var messageArray = [
+      {username: 'Baba', text: 'Baba is you!'},
+      {username: 'Kiki', text: 'Kiki is push!'},
+      {username: 'Golem', text: 'what is taters precious? Stupid fat hobbitses with their stupid stupid pockets'}
+    ];
+
+    for (let thisMsg of messageArray) {
+
+      var req = new stubs.request('/classes/messages', 'POST', thisMsg);
+      var res = new stubs.response();
+
+      handler.requestHandler(req, res);
+
+      expect(res._responseCode).to.equal(201);
+    }
+
+    // Now if we request the log for that room the message we posted should be there:
+    req = new stubs.request('/classes/messages', 'GET');
+    res = new stubs.response();
+
+    handler.requestHandler(req, res);
+
+    expect(res._responseCode).to.equal(200);
+    var messages = JSON.parse(res._data);
+    expect(messages.length).to.equal(5);
+    expect(res._ended).to.equal(true);
+
+    for (let msgIndex = 2; msgIndex - 2 < messageArray.length; ++msgIndex) {
+      expect(messages[msgIndex].username).to.equal(messageArray[msgIndex - 2].username);
+      expect(messages[msgIndex].text).to.equal(messageArray[msgIndex - 2]['text']);
+    }
+  });
 });

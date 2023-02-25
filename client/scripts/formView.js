@@ -9,7 +9,7 @@ var FormView = {
   handleSubmit: function(event) {
     // Stop the browser from submitting the form
     event.preventDefault();
-    
+
 
     var message = {
       username: App.username,
@@ -18,10 +18,12 @@ var FormView = {
     };
 
     Parse.create(message, (data) => {
-      _.extend(message, data[0]);
+      _.extend(message, data);
       Messages.add(message, MessagesView.render);
     });
-      },
+
+    event.target.reset();
+  },
 
   setStatus: function(active) {
     var status = active ? 'true' : null;
